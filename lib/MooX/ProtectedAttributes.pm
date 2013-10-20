@@ -4,14 +4,14 @@ package MooX::ProtectedAttributes;
 
 =head1 DESCRIPTION
 
-It happen that you may want to be able to create a class with private attribute that cannot be used outside this package.
+It happend that you may want to create a class with private attributes that can't be used outside this package.
 
-For exemple, you want to create in lazy, a DB connection, but you want to handle it in your class in a certain way (with possible handle of errors ....).
-You really want even with the "_" before your attribute, to allow any other package to use this directly.
+For example, you want to create in lazy, a DB connection, but you want to handle it in your class in a specific way (with possible handle of errors ....).
+You really want, even with the "_" before your attribute (which mean private), to avoid access of this attribute by any other packages.
 
 The goal of this package is to allow the init of the private attribute, but forbid reading from outside the package.
 
-With a protected attribute named "foo" for example, you cannot do this outside the current package :
+With a protected attribute named "foo" for example, you can't do this outside the current package :
 
   my $foo = $myObj->foo;
 
