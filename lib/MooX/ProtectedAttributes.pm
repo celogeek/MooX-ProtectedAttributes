@@ -21,7 +21,7 @@ or
 
 But this method is allowed inside the package where it has been declared.
 
-= SYNOPSIS
+=head1 SYNOPSIS
 
 You can use it in a role (Moo, Moose, Mo with a trick)
 
@@ -60,19 +60,37 @@ use warnings;
 # VERSION
 use Carp;
 
+=method import
+
+The method provide 2 methods :
+
+=over
+
+=item protected_has
+
+Like a "has", disable read access outside the current class.
+
+=item protected_with_deprecated_has
+
+Instead of dying, it will display a DEPRECATED message and run as usual.
+This allow you to alert user of the protected method to fix their program before you forbid the access to the attribute.
+
+=back
+
+=cut
+
 sub import {
     my $target = caller;
+
+    return if $target->can('protected_has') && $target->can('protected_with_deprecated_has');	
 
     my $around = $target->can('around');
     my $has    = $target->can('has');
 
-    my @target_isa;
-    { no strict 'refs'; @target_isa = @{"${target}::ISA"} };
-
-    my $minimum_caller_level = @target_isa ? 1 : 2;
+    my $minimum_caller_level = 2;
 
     my $ensure_call_in_target = sub {
-    	my ($name) = @_;
+    	my ($name, $deprecated_mode) = @_;
     	return sub {
 	    	my $orig = shift;
 	    	my $self = shift;
@@ -82,11 +100,14 @@ sub import {
 	
 	    	my $caller_level = $minimum_caller_level;
 	    	while(my $secure_caller = caller($caller_level++)) {
-	    		carp "$secure_caller vs $target";
 	    		return $self->$orig if $secure_caller eq $target;
 	    	}
-	
-	    	croak "You can't use the attribute $name outside the package $target !";
+			if ($deprecated_mode) {
+	    		carp "DEPRECATED: You can't use the attribute <$name> outside the package <$target> !";
+	    		return $self->$orig;
+			} else {
+	    		croak "You can't use the attribute <$name> outside the package <$target> !";
+	    	}
 	    }
     };
 
@@ -97,7 +118,15 @@ sub import {
     	$around->($name, $ensure_call_in_target->($name));
     };
 
+    my $protected_with_deprecated_has = sub {
+    	my ($name,  %attributes) = @_;
+
+    	$has->($name, %attributes);
+    	$around->($name, $ensure_call_in_target->($name, 1));
+    };
+
     { no strict 'refs'; *{"${target}::protected_has"} = $protected_has }
+    { no strict 'refs'; *{"${target}::protected_with_deprecated_has"} = $protected_with_deprecated_has }
 
 	return;
 }
