@@ -87,8 +87,6 @@ sub import {
     my $around = $target->can('around');
     my $has    = $target->can('has');
 
-    my $minimum_caller_level = 2;
-
     my $ensure_call_in_target = sub {
     	my ($name, $deprecated_mode) = @_;
     	return sub {
@@ -97,11 +95,11 @@ sub import {
 	    	my @params = @_;
 	
 	    	return $self->$orig(@params) if @params; #write is permitted
-	
-	    	my $caller_level = $minimum_caller_level;
-	    	while(my $secure_caller = caller($caller_level++)) {
-	    		return $self->$orig if $secure_caller eq $target;
-	    	}
+
+	    	my $caller = caller(2);
+
+	   		return $self->$orig if $caller eq $target;
+
 			if ($deprecated_mode) {
 	    		carp "DEPRECATED: You can't use the attribute <$name> outside the package <$target> !";
 	    		return $self->$orig;
@@ -113,17 +111,20 @@ sub import {
 
     my $protected_has = sub {
     	my ($name,  %attributes) = @_;
-
     	$has->($name, %attributes);
     	$around->($name, $ensure_call_in_target->($name));
     };
 
     my $protected_with_deprecated_has = sub {
     	my ($name,  %attributes) = @_;
-
     	$has->($name, %attributes);
     	$around->($name, $ensure_call_in_target->($name, 1));
     };
+
+    if ( my $info = $Role::Tiny::INFO{$target} ) {
+        $info->{not_methods}{$protected_has} = $protected_has;
+        $info->{not_methods}{$protected_with_deprecated_has} = $protected_with_deprecated_has;
+    }
 
     { no strict 'refs'; *{"${target}::protected_has"} = $protected_has }
     { no strict 'refs'; *{"${target}::protected_with_deprecated_has"} = $protected_with_deprecated_has }
