@@ -1,7 +1,7 @@
-package t::lib::myTestClass;
+package t::lib::moo::myTestClass;
 use Moo;
 use MooX::ProtectedAttributes;
-with 't::lib::myTestClassRole';
+with 't::lib::moo::myTestClassRole';
 
 protected_has 'foo' => (is => 'rw');
 

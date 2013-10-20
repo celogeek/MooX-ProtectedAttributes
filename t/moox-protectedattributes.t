@@ -3,8 +3,8 @@ use strict;
 use warnings;
 use Test::More;
 
-use t::lib::myTestClass;
-use t::lib::myTestClass2;
+use t::lib::moo::myTestClass;
+use t::lib::moo::myTestClass2;
 
 sub run_test {
 	my ($main_class, $role) = @_;
@@ -35,11 +35,11 @@ sub run_test {
 }
 
 subtest 'class and direct role' => sub {
-	run_test('t::lib::myTestClass', 't::lib::myTestClassRole');
+	run_test('t::lib::moo::myTestClass', 't::lib::moo::myTestClassRole');
 };
 
 subtest 'class and indirect role' => sub {
-	run_test('t::lib::myTestClass2', 't::lib::myTestClassRole3');
+	run_test('t::lib::moo::myTestClass2', 't::lib::moo::myTestClassRole3');
 
 };
 

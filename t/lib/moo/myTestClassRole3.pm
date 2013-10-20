@@ -1,4 +1,4 @@
-package t::lib::myTestClassRole;
+package t::lib::moo::myTestClassRole3;
 use Moo::Role;
 use MooX::ProtectedAttributes;
 
