@@ -25,6 +25,8 @@ like $@, qr{\QYou can't use the attribute <bar> outside the package <t::lib::myT
 
 is $t->display_foo, "DISPLAY: 123", "foo can be read from main class";
 is $t->display_bar, "DISPLAY: 456", "bar can be read from role class";
+is $t->display_indirect_bar, "DISPLAY: 456", "bar can be read from role class by indirect call";
+is $t->display_large_indirect_bar, "DISPLAY: 456", "bar can be read from role class by large indirect call";
 is $t->display_baz, "DISPLAY: 789", "baz can be read from role class";
 is $t->display_role_bar, "DISPLAY: 456", "bar can be read from role class";
 
