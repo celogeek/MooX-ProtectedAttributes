@@ -1,7 +1,7 @@
 #!perl
 use strict;
 use warnings;
-use Test::More;
+use Test::Most 'die';
 
 use Test::Trap;
 
@@ -29,7 +29,7 @@ sub run_test {
 		$t->baz("789"); # moo keep the sub instead of replacing it like moose
 		
 		eval { $t->foo };
-		like $@, qr{\QYou can't use the attribute <foo> outside the package <$main_class> !\E}, 'reading foo is forbidden';
+		like $@, qr{\QYou can't use the attribute <foo> outside the package <$main_class> or anyone that consume it!\E}, 'reading foo is forbidden';
 		
 		{
 			local $ENV{SKIP_WARNING} = 1;
@@ -37,14 +37,12 @@ sub run_test {
 		}
 		
 		eval { $t->bar };
-		like $@, qr{\QYou can't use the attribute <bar> outside the package <$role> !\E}, 'reading bar is forbidden';
+		like $@, qr{\QYou can't use the attribute <bar> outside the package <$role> or anyone that consume it!\E}, 'reading bar is forbidden';
 		
 		eval { $t->baz };
-		like $@, qr{\QYou can't use the attribute <baz> outside the package <$role> !\E}, 'reading baz is forbidden even if redefined';
+		like $@, qr{\QYou can't use the attribute <baz> outside the package <$role> or anyone that consume it!\E}, 'reading baz is forbidden even if redefined';
 		
-		eval { $t->display_role_bar_direct };
-		like $@, qr{\QYou can't use the attribute <bar> outside the package <$role> !\E}, 'reading bar is forbidden even in the main class';
-		
+		is $t->display_role_bar_direct, "DISPLAY: 456", "protected bar is accessible inside the the class that consume it";
 		
 		is $t->display_foo, "DISPLAY: 123", "foo can be read from main class";
 		is $t->display_bar, "DISPLAY: 456", "bar can be read from role class";
@@ -68,7 +66,7 @@ sub run_test_with_deprecated {
 		$t->baz("789"); # moo keep the sub instead of replacing it like moose
 		
 		trap { is $t->foo(), "123", "we can read foo" };
-		like $trap->stderr, qr{\QDEPRECATED: You can't use the attribute <foo> outside the package <$main_class> !\E}, '... but we got a deprecated message';
+		like $trap->stderr, qr{\QDEPRECATED: You can't use the attribute <foo> outside the package <$main_class> or anyone that consume it!\E}, '... but we got a deprecated message';
 		
 		{
 			local $ENV{SKIP_WARNING} = 1;
@@ -77,13 +75,13 @@ sub run_test_with_deprecated {
 		}
 
 		trap { is $t->bar(), "456", "we can read bar" };
-		like $trap->stderr, qr{\QDEPRECATED: You can't use the attribute <bar> outside the package <$role> !\E},  '... but we got a deprecated message';
+		like $trap->stderr, qr{\QDEPRECATED: You can't use the attribute <bar> outside the package <$role> or anyone that consume it!\E},  '... but we got a deprecated message';
 		
 		trap { is $t->baz(), "789", "we can read baz" };
-		like $trap->stderr, qr{\QDEPRECATED: You can't use the attribute <baz> outside the package <$role> !\E},  '... but we got a deprecated message';
+		like $trap->stderr, qr{\QDEPRECATED: You can't use the attribute <baz> outside the package <$role> or anyone that consume it!\E},  '... but we got a deprecated message';
 		
 		trap { is $t->display_role_bar_direct, "DISPLAY: 456", "... also indirectly" };
-		like $trap->stderr, qr{\QDEPRECATED: You can't use the attribute <bar> outside the package <$role> !\E},  '... but still we got a deprecated message';
+		ok !$trap->stderr, '... and we don t have a deprecated message because the protected is allowed inside the class that consume it';
 		
 		is $t->display_foo, "DISPLAY: 123", "foo can be read from main class";
 		is $t->display_bar, "DISPLAY: 456", "bar can be read from role class";
