@@ -31,6 +31,11 @@ sub run_test {
 		eval { $t->foo };
 		like $@, qr{\QYou can't use the attribute <foo> outside the package <$main_class> !\E}, 'reading foo is forbidden';
 		
+		{
+			local $ENV{SKIP_WARNING} = 1;
+			is $t->foo, "123", '... unless we match the "unless" method';
+		}
+		
 		eval { $t->bar };
 		like $@, qr{\QYou can't use the attribute <bar> outside the package <$role> !\E}, 'reading bar is forbidden';
 		
@@ -65,6 +70,12 @@ sub run_test_with_deprecated {
 		trap { is $t->foo(), "123", "we can read foo" };
 		like $trap->stderr, qr{\QDEPRECATED: You can't use the attribute <foo> outside the package <$main_class> !\E}, '... but we got a deprecated message';
 		
+		{
+			local $ENV{SKIP_WARNING} = 1;
+			trap { is $t->foo(), "123", "we can read foo" };
+			ok !$trap->stderr, '... unless we match the "unless" method';
+		}
+
 		trap { is $t->bar(), "456", "we can read bar" };
 		like $trap->stderr, qr{\QDEPRECATED: You can't use the attribute <bar> outside the package <$role> !\E},  '... but we got a deprecated message';
 		

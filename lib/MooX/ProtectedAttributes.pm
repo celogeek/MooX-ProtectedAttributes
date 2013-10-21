@@ -75,6 +75,23 @@ Like a "has", disable read access outside the current class.
 Instead of dying, it will display a DEPRECATED message and run as usual.
 This allow you to alert user of the protected method to fix their program before you forbid the access to the attribute.
 
+=item unless attribute option
+
+You can use the "unless" => sub { $condition } option to your attribute.
+
+If the condition match, the attribute will not generate any warnings or die
+
+  protect_has "foo" => (is => 'ro'), unless => sub { $ENV{SKIP_WARNING} };
+
+  $myObj->foo # croak
+  
+  {
+	local $ENV{SKIP_WARNING} = 1;
+    $myObj->foo # works
+  }
+
+You can use it for your test, or may be to match some condition like 'OK if it is call from this package'
+
 =back
 
 =cut
@@ -88,13 +105,16 @@ sub import {
     my $has    = $target->can('has');
 
     my $ensure_call_in_target = sub {
-    	my ($name, $deprecated_mode) = @_;
+    	my ($name, $deprecated_mode, $unless_method) = @_;
     	return sub {
 	    	my $orig = shift;
 	    	my $self = shift;
 	    	my @params = @_;
 	
 	    	return $self->$orig(@params) if @params; #write is permitted
+			if (defined $unless_method) {
+				return $self->$orig(@params) if $unless_method->();
+			}
 
 	    	my $caller = caller(2);
 
@@ -111,14 +131,18 @@ sub import {
 
     my $protected_has = sub {
     	my ($name,  %attributes) = @_;
+		my $unless_method = delete $attributes{'unless'};
+		croak "unless option should be a CODE REF" if defined $unless_method && ref $unless_method ne 'CODE';
     	$has->($name, %attributes);
-    	$around->($name, $ensure_call_in_target->($name));
+    	$around->($name, $ensure_call_in_target->($name, 0, $unless_method));
     };
 
     my $protected_with_deprecated_has = sub {
     	my ($name,  %attributes) = @_;
+		my $unless_method = delete $attributes{'unless'};
+		croak "unless option should be a CODE REF" if defined $unless_method && ref $unless_method ne 'CODE';
     	$has->($name, %attributes);
-    	$around->($name, $ensure_call_in_target->($name, 1));
+    	$around->($name, $ensure_call_in_target->($name, 1, $unless_method));
     };
 
     if ( my $info = $Role::Tiny::INFO{$target} ) {
