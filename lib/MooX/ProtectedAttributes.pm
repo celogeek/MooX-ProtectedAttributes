@@ -11,7 +11,7 @@ You really want, even with the "_" before your attribute (which mean private), t
 
 The goal of this package is to allow the init of the private attribute, but forbid reading from outside the package.
 
-With a protected attribute named "foo" for example, you can't do this outside the current package :
+With a protected attribute named "foo" for example, you can't do this outside the current package or any package that consume it :
 
   my $foo = $myObj->foo;
 
@@ -118,13 +118,13 @@ sub import {
 
 	    	my $caller = caller(2);
 
-	   		return $self->$orig if $caller eq $target;
+	   		return $self->$orig if $caller->DOES($target);
 
 			if ($deprecated_mode) {
-	    		carp "DEPRECATED: You can't use the attribute <$name> outside the package <$target> !";
+	    		carp "DEPRECATED: You can't use the attribute <$name> outside the package <$target> or anyone that consume it!";
 	    		return $self->$orig;
 			} else {
-	    		croak "You can't use the attribute <$name> outside the package <$target> !";
+	    		croak "You can't use the attribute <$name> outside the package <$target> or anyone that consume it!";
 	    	}
 	    }
     };
