@@ -3,7 +3,7 @@ use Moo;
 use MooX::ProtectedAttributes;
 with 't::lib::mooWithDeprecated::myTestClassRole2';
 
-protected_with_deprecated_has 'foo' => (is => 'rw');
+protected_with_deprecated_has 'foo' => (is => 'rw'), unless => sub {$ENV{SKIP_WARNING}};
 
 sub baz { 789 }
 
